@@ -228,6 +228,11 @@ async def agent_turn(state, send_to_manager, send_to_owner):
     state["history"].append({"role": "assistant", "content": answer["raw"]})
     problems = []
 
+    # The manager can take a confirmation back. Then the booking is open again,
+    # and the next confirmation must get the full recap again.
+    if state["recap_sent"] and answer.get("status") == "requesting":
+        state["recap_sent"] = False
+
     # The model says the booking is done: check the facts and add the recap.
     if answer.get("status") == "confirmed" and not state["recap_sent"]:
         problems = check_facts(answer, state)
