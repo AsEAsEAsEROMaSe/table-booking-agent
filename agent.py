@@ -459,6 +459,9 @@ async def run_telegram():
         state["what_people_wrote"].append(profile)
         state["history"].append({"role": "user", "content": "SYSTEM: " + profile})
 
+    if voice.can_speak():
+        asyncio.create_task(asyncio.to_thread(voice.warm_up))  # in the background, not blocking
+
     print(f"Talking to {config.TARGET}. Owner chat: {config.OWNER_CHAT}")
     async with lock:
         await start_conversation(state, send_to_manager, send_to_owner)

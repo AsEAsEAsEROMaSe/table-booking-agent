@@ -23,6 +23,16 @@ def can_speak():
     return bool(config.VOICE_TTS_URL)
 
 
+def warm_up():
+    """Zonos is unloaded after some idle time and the first phrase then takes ~30 s.
+    Loading it in advance keeps the first voice reply to the manager quick."""
+    try:
+        requests.post(f"{config.VOICE_TTS_URL}/engines/zonos/start",
+                      headers={"X-TTS-Key": config.VOICE_TTS_KEY}, timeout=120)
+    except Exception as e:
+        print("Voice warm-up failed (voice replies may be slow):", e)
+
+
 def convert(src, dst, *ffmpeg_args):
     """Small wrapper around ffmpeg."""
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", src, *ffmpeg_args, dst], check=True)
