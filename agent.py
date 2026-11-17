@@ -474,6 +474,18 @@ async def run_telegram():
     print(f"Talking to {config.TARGET}. Owner chat: {config.OWNER_CHAT}")
     async with lock:
         await start_conversation(state, send_to_manager, send_to_owner)
+
+        # Catch up: messages that came while the agent was stopped are not delivered as events.
+        # Answer the manager's messages that are newer than the agent's last message in the chat.
+        missed = []
+        async for m in client.iter_messages(manager, limit=20):
+            if m.out:
+                break
+            missed.append(m.text or "[sticker, photo, voice or file]")
+        if missed and any(x["role"] == "assistant" for x in state["history"]):
+            print(f"Catching up on {len(missed)} missed message(s)")
+            await on_manager_message(state, "\n".join(reversed(missed)), send_to_manager, send_to_owner)
+
     await client.run_until_disconnected()  # keep listening until Ctrl+C
 
 
