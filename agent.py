@@ -259,7 +259,8 @@ async def agent_turn(state, send_to_manager, send_to_owner):
     # The model may decide to send nothing (for example after "goodbye").
     reply = (answer.get("reply") or "").strip()
     if reply:
-        await send_to_manager(reply)
+        as_voice = answer.get("voice") in (True, "true", "True")
+        await send_to_manager(reply, as_voice)
 
     # Something the agent does not know: ask the owner instead of guessing.
     question = (answer.get("owner_question") or "").strip()
@@ -319,8 +320,8 @@ async def dry_run():
     state = load_state()
 
     # In test mode "sending" just means printing.
-    async def send_to_manager(text):
-        print("\nAGENT -> manager:", text, "\n")
+    async def send_to_manager(text, as_voice=False):
+        print("\nAGENT -> manager:" + (" [voice]" if as_voice else ""), text, "\n")
 
     async def send_to_owner(text):
         print("\nAGENT -> owner:", text, "\n")
@@ -372,8 +373,9 @@ async def run_telegram():
     # If the manager's last message was a voice message, the agent answers with voice too.
     manager_spoke = {"last_was_voice": False}
 
-    async def send_to_manager(text):
-        if manager_spoke["last_was_voice"] and voice.can_speak():
+    async def send_to_manager(text, as_voice=False):
+        # Voice if the manager just spoke, or if the model chose voice (e.g. the manager asked for it).
+        if (as_voice or manager_spoke["last_was_voice"]) and voice.can_speak():
             try:
                 # Cyrillic letters in the reply mean it is in Ukrainian.
                 language = "uk" if any("а" <= ch.lower() <= "я" or ch in "іїєґ" for ch in text) else "en"
