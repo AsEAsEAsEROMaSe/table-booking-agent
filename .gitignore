@@ -1,0 +1,9 @@
+docs/
+.env
+*.session
+*.session-journal
+state/
+logs/
+__pycache__/
+.venv/
+*.pdf
