@@ -295,7 +295,9 @@ async def on_owner_message(state, text, send_to_manager, send_to_owner):
 async def start_conversation(state, send_to_manager, send_to_owner):
     """The manager never writes first, so the agent starts.
     After a restart the old chat continues and nothing is sent again."""
-    if state["history"]:
+    # "Already started" means the agent has already written something
+    # (the history may hold only the manager's profile at this point).
+    if any(m["role"] == "assistant" for m in state["history"]):
         print("Continuing the old conversation")
         return
     state["history"].append({"role": "user", "content": "SYSTEM: Write your first message to the manager now."})
